@@ -1,10 +1,9 @@
-package p1006_encoding;
+package p1006;
 
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -45,9 +44,6 @@ public class Solution {
 		}
 	}
 
-	private static List<Character> leftRight = Arrays.asList((char) CONST.l, 'a');
-	private static List<Character> topButtom = Arrays.asList((char) CONST.t, 'a');
-
 	private static void print() {
 		for (List<Integer> row : inputData) {
 			for (Integer i : row) {
@@ -63,51 +59,53 @@ public class Solution {
 		p.y = 0;
 		for (List<Integer> row : inputData) {
 			p.x = 0;
-			for (Integer i : row) {
-				boolean hasReal = false;
-				if (i == CONST.tl || i == 'a') {
-					hasReal |= i == CONST.tl;
+			for (Integer tl : row) {
+				if (tl == CONST.tl || tl == 'a') {
+					boolean hasReal = false;
 					for (int length = 1; length < row.size() - p.x && length < inputData.size() - p.y; length++) {
-						int end = inputData.get(p.y + length).get(p.x + length);
-						if (end == CONST.br || end == 'a') {
-							hasReal |= end == CONST.br;
-							boolean isCorrect = true;
-							int tr = inputData.get(p.y).get(p.x + length);
-							if (tr == CONST.tr || tr == 'a') {
-								hasReal |= tr == CONST.tr;
-							} else {
+						boolean isCorrect = true;
+						int br = inputData.get(p.y + length).get(p.x + length);
+						int tr = inputData.get(p.y).get(p.x + length);
+						int bl = inputData.get(p.y + length).get(p.x);
+						hasReal = tl == CONST.tl;
+						hasReal |= br == CONST.br;
+						hasReal |= tr == CONST.tr;
+						hasReal |= bl == CONST.bl;
+						if (br != CONST.br && br != 'a') {
+							isCorrect = false;
+							continue;
+						}
+						if (tr != CONST.tr && tr != 'a') {
+							isCorrect = false;
+							continue;
+						}
+						if (bl != CONST.bl && bl != 'a') {
+							isCorrect = false;
+							continue;
+						}
+						for (int tempLength = 1; tempLength < length; tempLength++) {
+							int left = inputData.get(p.y + tempLength).get(p.x);
+							int right = inputData.get(p.y + tempLength).get(p.x + length);
+							int top = inputData.get(p.y).get(p.x + tempLength);
+							int buttom = inputData.get(p.y + length).get(p.x + tempLength);
+							if ((left != CONST.l && left != 'a') || (right != CONST.r && right != 'a')) {
 								isCorrect = false;
+								break;
 							}
-							int bl = inputData.get(p.y + length).get(p.x);
-							if (bl == CONST.bl || bl == 'a') {
-								hasReal |= bl == CONST.bl;
-							} else {
+							if ((top != CONST.t && top != 'a') || (buttom != CONST.b && buttom != 'a')) {
 								isCorrect = false;
+								break;
 							}
-							for (int tempLength = 1; tempLength < length; tempLength++) {
-								int left = inputData.get(p.y + tempLength).get(p.x);
-								int right = inputData.get(p.y + tempLength).get(p.x + length);
-								int top = inputData.get(p.y).get(p.x + tempLength);
-								int buttom = inputData.get(p.y + length).get(p.x + tempLength);
-								if (!leftRight.contains((char) left) && !leftRight.contains((char) right)) {
-									hasReal |= left != 'a';
-									hasReal |= right != 'a';
-									isCorrect = false;
-									break;
-								}
-								if (!topButtom.contains((char) top) && !topButtom.contains((char) buttom)) {
-									hasReal |= top != 'a';
-									hasReal |= buttom != 'a';
-									isCorrect = false;
-									break;
-								}
-							}
-							if (isCorrect && hasReal) {
-								Result r = new Result();
-								r.length = length + 1;
-								r.p = p;
-								return r;
-							}
+							hasReal |= left == CONST.l;
+							hasReal |= right == CONST.r;
+							hasReal |= top == CONST.t;
+							hasReal |= buttom == CONST.b;
+						}
+						if (isCorrect && hasReal) {
+							Result r = new Result();
+							r.length = length + 1;
+							r.p = p;
+							return r;
 						}
 					}
 				}
