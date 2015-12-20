@@ -20,12 +20,14 @@ public class Solution {
 
 	private static List<Branch> data = new ArrayList<>();
 	private static List<Branch> dataInput = new ArrayList<>();
+	private static List<Branch> leaves = new ArrayList<>();
 	private static Branch root = new Branch();
+	private static int summ = 0;
+	private static int q = 0;
 
 	protected static void solution(Scanner in, PrintWriter out) {
 		int n = in.nextInt();
-		int q = in.nextInt();
-		int summ = 0;
+		q = in.nextInt();
 		for (int i = 1; i < n; i++) {
 			Branch b = new Branch();
 			b.start = in.nextInt();
@@ -39,27 +41,62 @@ public class Solution {
 		buildDown();
 
 		for (int i = 0; i < q; i++) {
-			List<Branch> leaves = new ArrayList<>();
+			leaves = new ArrayList<>();
 			for (Branch branch : data) {
 				if (branch.left == null && branch.right == null) {
 					leaves.add(branch);
 				}
 			}
-			Branch min = leaves.get(0);
-			for (Branch branch : leaves) {
-				if (min.weight > branch.weight) {
-					min = branch;
-				}
-			}
-			// remove min
-			data.remove(min);
-			if (min.parent != null) {
-				min.parent.remove(min);
-			}
-			summ -= min.weight;
-			System.out.println("remove " + min.toString());
 		}
-		out.println(summ + "");
+
+		List<Branch> checked = new ArrayList<>();
+		List<Branch> front = new ArrayList<>();
+		findWay(checked, front, 0);
+
+		out.println((summ - minSumm) + "");
+	}
+
+	private static int minSumm = Integer.MAX_VALUE;
+
+	private static void findWay(List<Branch> checked, List<Branch> front, int s) {
+		if (checked.size() == q) {
+			if (minSumm >= s) {
+				minSumm = s;
+			}
+			return;
+		}
+		if (s >= minSumm) {
+			return;
+		}
+		for (Branch branch : front) {
+			Branch next = branch.parent;
+			if (!checked.contains(next)) {
+				if (next.left != null && !checked.contains(next.left)) {
+					break;
+				}
+				if (next.right != null && !checked.contains(next.right)) {
+					break;
+				}
+				front.add(next);
+				checked.add(next);
+				s += next.weight;
+				findWay(checked, front, s);
+				front.remove(next);
+				checked.remove(next);
+				s -= next.weight;
+			}
+		}
+		for (Branch next : leaves) {
+			if (!checked.contains(next)) {
+				front.add(next);
+				checked.add(next);
+				s += next.weight;
+				findWay(checked, front, s);
+				front.remove(next);
+				checked.remove(next);
+				s -= next.weight;
+			}
+		}
 	}
 
 	private static void buildDown() {
