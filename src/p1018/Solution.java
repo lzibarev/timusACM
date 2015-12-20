@@ -18,14 +18,16 @@ public class Solution {
 		out.flush();
 	}
 
-	private static List<Branch> data = new ArrayList<>();
-	private static List<Branch> dataInput = new ArrayList<>();
-	private static List<Branch> leaves = new ArrayList<>();
+	private static List<Branch> data;
+	private static List<Branch> dataInput;
 	private static Branch root = new Branch();
-	private static int summ = 0;
 	private static int q = 0;
 
 	protected static void solution(Scanner in, PrintWriter out) {
+		data = new ArrayList<>();
+		dataInput = new ArrayList<>();
+		minSumm = Integer.MAX_VALUE;
+		int summ = 0;
 		int n = in.nextInt();
 		q = in.nextInt();
 		for (int i = 1; i < n; i++) {
@@ -40,27 +42,17 @@ public class Solution {
 
 		buildDown();
 
-		for (int i = 0; i < q; i++) {
-			leaves = new ArrayList<>();
-			for (Branch branch : data) {
-				if (branch.left == null && branch.right == null) {
-					leaves.add(branch);
-				}
-			}
-		}
-
 		List<Branch> checked = new ArrayList<>();
-		List<Branch> front = new ArrayList<>();
-		findWay(checked, front, 0);
+		findWay(checked, 0);
 
 		out.println((summ - minSumm) + "");
 	}
 
-	private static int minSumm = Integer.MAX_VALUE;
+	private static int minSumm;
 
-	private static void findWay(List<Branch> checked, List<Branch> front, int s) {
+	private static void findWay(List<Branch> checked, int s) {
 		if (checked.size() == q) {
-			if (minSumm >= s) {
+			if (minSumm > s) {
 				minSumm = s;
 			}
 			return;
@@ -68,34 +60,21 @@ public class Solution {
 		if (s >= minSumm) {
 			return;
 		}
-		for (Branch branch : front) {
-			Branch next = branch.parent;
-			if (!checked.contains(next)) {
-				if (next.left != null && !checked.contains(next.left)) {
-					break;
-				}
-				if (next.right != null && !checked.contains(next.right)) {
-					break;
-				}
-				front.add(next);
-				checked.add(next);
-				s += next.weight;
-				findWay(checked, front, s);
-				front.remove(next);
-				checked.remove(next);
-				s -= next.weight;
+		for (Branch next : data) {
+			if (checked.contains(next)) {
+				continue;
 			}
-		}
-		for (Branch next : leaves) {
-			if (!checked.contains(next)) {
-				front.add(next);
-				checked.add(next);
-				s += next.weight;
-				findWay(checked, front, s);
-				front.remove(next);
-				checked.remove(next);
-				s -= next.weight;
+			if (next.left != null && !checked.contains(next.left)) {
+				continue;
 			}
+			if (next.right != null && !checked.contains(next.right)) {
+				continue;
+			}
+			checked.add(next);
+			s += next.weight;
+			findWay(checked, s);
+			checked.remove(next);
+			s -= next.weight;
 		}
 	}
 
@@ -119,12 +98,13 @@ public class Solution {
 			}
 			if (emptyStart) {
 				l.changeStartAndEnd();
-				count.put(l.start, count.getOrDefault(l.start, 0) + 1);
 				leaves.add(l);
 			} else if (emptyEnd) {
-				count.put(l.start, count.getOrDefault(l.start, 0) + 1);
 				leaves.add(l);
 			}
+			count.put(l.start, count.getOrDefault(l.start, 0) + 1);
+			count.put(l.end, count.getOrDefault(l.end, 0) + 1);
+
 		}
 		// вырезать каждый лист указав у него парента
 		for (Branch l : leaves) {
@@ -137,10 +117,16 @@ public class Solution {
 					break;
 				}
 			}
-			if (count.get(l.start) == 2) {
-				dataInput.remove(l);
+		}
+		// удалить листья
+		for (Branch l : leaves) {
+			if (l.parent.left == null || leaves.contains(l.parent.left)) {
+				if (l.parent.right == null || leaves.contains(l.parent.right)) {
+					dataInput.remove(l);
+				}
 			}
 		}
+
 		if (dataInput.size() != 0) {
 			buildDown();
 		} else {
@@ -171,12 +157,8 @@ public class Solution {
 			}
 		}
 
-		private void remove(Branch b) {
-			if (left == b) {
-				left = null;
-			} else {
-				right = null;
-			}
+		private int count() {
+			return (left == null ? 0 : 1) + (right == null ? 0 : 1);
 		}
 
 		@Override
