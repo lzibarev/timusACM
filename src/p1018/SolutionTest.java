@@ -90,6 +90,13 @@ public class SolutionTest {
 	}
 
 	@Test
+	public void test8_2() {
+		input = "7 7\r\n1 2 10\r\n1 3 20\r\n2 4 30\r\n2 5 11\r\n3 6 12\r\n3 7 40\r\n";
+		output = run(input);
+		Assert.assertEquals("123", output);
+	}
+
+	@Test
 	@Ignore
 	public void test9() {
 		input = "6 4\r\n1 2 20\r\n2 5 100\r\n2 3 20\r\n6 3 70\r\n4 1 10\r\n";
