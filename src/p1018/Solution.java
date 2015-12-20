@@ -2,7 +2,9 @@ package p1018;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Solution {
@@ -17,11 +19,12 @@ public class Solution {
 	}
 
 	private static List<Branch> data = new ArrayList<>();
+	private static List<Branch> dataInput = new ArrayList<>();
+	private static Branch root = new Branch();
 
 	protected static void solution(Scanner in, PrintWriter out) {
 		int n = in.nextInt();
 		int q = in.nextInt();
-		Branch root = null;
 		int summ = 0;
 		for (int i = 1; i < n; i++) {
 			Branch b = new Branch();
@@ -30,14 +33,10 @@ public class Solution {
 			b.weight = in.nextInt();
 			summ += b.weight;
 			data.add(b);
-			if (root == null) {
-				root = new Branch();
-				root.start = 0;
-				root.end = b.start;
-			}
+			dataInput.add(b);
 		}
 
-		buildDown(root);
+		buildDown();
 
 		for (int i = 0; i < q; i++) {
 			List<Branch> leaves = new ArrayList<>();
@@ -54,31 +53,65 @@ public class Solution {
 			}
 			// remove min
 			data.remove(min);
-			min.parent.remove(min);
+			if (min.parent != null) {
+				min.parent.remove(min);
+			}
 			summ -= min.weight;
-			// System.out.println("remove " + min.toString());
+			System.out.println("remove " + min.toString());
 		}
 		out.println(summ + "");
 	}
 
-	private static void buildDown(Branch root) {
-		for (Branch b2 : data) {
-			if (root == b2) {
-				continue;
+	private static void buildDown() {
+		List<Branch> leaves = new ArrayList<>();
+		Map<Integer, Integer> count = new HashMap<>();
+		// Получить все листья
+		for (Branch l : dataInput) {
+			boolean emptyStart = true;
+			boolean emptyEnd = true;
+			for (Branch b2 : dataInput) {
+				if (b2 == l) {
+					continue;
+				}
+				if (l.start == b2.start || l.start == b2.end) {
+					emptyStart = false;
+				}
+				if (l.end == b2.start || l.end == b2.end) {
+					emptyEnd = false;
+				}
 			}
-			if (root.end == b2.start) {
-				root.add(b2);
-				buildDown(b2);
-			}
-			if (root.end == b2.end) {
-				b2.changeStartAndEnd();
-				root.add(b2);
-				buildDown(b2);
-			}
-			if (root.left != null && root.right != null) {
-				return;
+			if (emptyStart) {
+				l.changeStartAndEnd();
+				count.put(l.start, count.getOrDefault(l.start, 0) + 1);
+				leaves.add(l);
+			} else if (emptyEnd) {
+				count.put(l.start, count.getOrDefault(l.start, 0) + 1);
+				leaves.add(l);
 			}
 		}
+		// вырезать каждый лист указав у него парента
+		for (Branch l : leaves) {
+			for (Branch b2 : dataInput) {
+				if (leaves.contains(b2)) {// парент не может быть листом
+					continue;
+				}
+				if (l.start == b2.end || l.start == b2.start) {
+					b2.add(l);
+					break;
+				}
+			}
+			if (count.get(l.start) == 2) {
+				dataInput.remove(l);
+			}
+		}
+		if (dataInput.size() != 0) {
+			buildDown();
+		} else {
+			for (Branch l : leaves) {
+				root.add(l);
+			}
+		}
+
 	}
 
 	private static class Branch {
@@ -104,8 +137,9 @@ public class Solution {
 		private void remove(Branch b) {
 			if (left == b) {
 				left = null;
+			} else {
+				right = null;
 			}
-			right = null;
 		}
 
 		@Override

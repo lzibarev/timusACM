@@ -53,4 +53,11 @@ public class SolutionTest {
 		Assert.assertEquals("21", output);
 	}
 
+	@Test
+	public void test4() {
+		input = "7 3\r\n1 2 12\r\n1 3 1\r\n2 4 30\r\n2 5 30\r\n3 6 30\r\n3 7 30\r\n";
+		output = run(input);
+		Assert.assertEquals("72", output);
+	}
+
 }
