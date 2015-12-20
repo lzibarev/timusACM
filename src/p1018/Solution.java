@@ -21,23 +21,21 @@ public class Solution {
 
 	private static List<Branch> data;
 	private static List<Branch> dataInput;
-	private static int removeCount = 0;
+	private static int safeCount = 0;
 
 	protected static void solution(Scanner in, PrintWriter out) {
 		data = new ArrayList<>();
 		dataInput = new ArrayList<>();
-		minSumm = Integer.MAX_VALUE;
-		int summ = 0;
+		maxSumm = 0;
 		int n = in.nextInt();
 		int q = in.nextInt();
-		removeCount = n - q - 1;
+		safeCount = q;
 		Map<Integer, Integer> count = new HashMap<>();
 		for (int i = 1; i < n; i++) {
 			Branch b = new Branch();
 			b.start = in.nextInt();
 			b.end = in.nextInt();
 			b.weight = in.nextInt();
-			summ += b.weight;
 			data.add(b);
 			dataInput.add(b);
 			count.put(b.start, count.getOrDefault(b.start, 0) + 1);
@@ -58,39 +56,49 @@ public class Solution {
 		}
 		buildDown(root);
 
-		List<Branch> checked = new ArrayList<>();
-		findWay(checked, 0);
+		Branch[] front = new Branch[safeCount + 1];
+		front[0] = root;
+		findWay(0, front, 0);
 
-		out.println((summ - minSumm) + "");
+		out.println(maxSumm + "");
 	}
 
-	private static int minSumm;
+	private static int maxSumm;
 
-	private static void findWay(List<Branch> checked, int s) {
-		if (checked.size() == removeCount) {
-			if (minSumm > s) {
-				minSumm = s;
+	private static void findWay(int count, Branch[] front, int s) {
+		if (count == safeCount) {
+			if (maxSumm < s) {
+				maxSumm = s;
 			}
 			return;
 		}
-		if (s >= minSumm) {
-			return;
-		}
-		for (Branch next : data) {
-			if (checked.contains(next)) {
-				continue;
+		for (int index = 0; index < front.length; index++) {
+			Branch b = front[index];
+			if (b == null) {
+				break;
 			}
-			if (next.left != null && !checked.contains(next.left)) {
-				continue;
+			if (b.left != null && !b.left.checked) {
+				b.left.checked = true;
+				count += 1;
+				front[count] = b.left;
+				s += b.left.weight;
+				findWay(count, front, s);
+				s -= b.left.weight;
+				front[count] = null;
+				count -= 1;
+				b.left.checked = false;
 			}
-			if (next.right != null && !checked.contains(next.right)) {
-				continue;
+			if (b.right != null && !b.right.checked) {
+				b.right.checked = true;
+				count += 1;
+				front[count] = b.right;
+				s += b.right.weight;
+				findWay(count, front, s);
+				s -= b.right.weight;
+				front[count] = null;
+				count -= 1;
+				b.right.checked = false;
 			}
-			checked.add(next);
-			s += next.weight;
-			findWay(checked, s);
-			checked.remove(next);
-			s -= next.weight;
 		}
 	}
 
@@ -110,13 +118,9 @@ public class Solution {
 		}
 	}
 
-	private static class Input {
-		private int start, end, weight;
-	}
-
 	private static class Branch {
 		private int start, end, weight;
-
+		boolean checked = false;;
 		private Branch parent, left, right;
 
 		private void changeStartAndEnd() {
