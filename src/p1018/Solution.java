@@ -50,7 +50,8 @@ public class Solution {
 			}
 		}
 		leaves = new HashSet<>();
-		buildDown(root);
+		int index = 0;
+		buildDown(root, index);
 		while (!leaves.isEmpty()) {
 			HashSet<Branch> tmp = new HashSet<>();
 			for (Branch b : leaves) {
@@ -59,6 +60,7 @@ public class Solution {
 						tmp.add(b.parent);
 					}
 					b.parent.countChild += b.countChild + 1;
+					b.parent.weightSumm += b.weightSumm + b.weight;
 				}
 			}
 			leaves = tmp;
@@ -75,10 +77,18 @@ public class Solution {
 		if (count == 0) {
 			return 0;
 		}
+		if (root.max.containsKey(count)) {
+			return root.max.get(count);
+		}
 		count--;
+		if (root.countChild < count) {
+			return root.weightSumm;
+		}
 		long max = 0;
 		if (root.left != null) {
-			for (int i = 0; i <= root.left.countChild + 1 && i <= count; i++) {
+			int minOnLeft = Math.max(0, count - root.right.countChild - 2);
+			int maxOnLeft = Math.min(root.left.countChild + 1, count);
+			for (int i = minOnLeft; i <= maxOnLeft; i++) {
 				long maxLeft = 0;
 				long maxRight = 0;
 				if (root.left != null) {
@@ -92,12 +102,17 @@ public class Solution {
 				}
 			}
 		}
+		root.max.put(count + 1, max + root.weight);
 		return max + root.weight;
 	}
 
 	private static HashSet<Branch> leaves;
 
-	private static void buildDown(Branch root) {
+	private static void buildDown(Branch root, int index) {
+		index++;
+		if (index > 200 * 200) {
+			(new int[1])[10] = 1;// throw error
+		}
 		boolean hasChild = false;
 		for (Branch b : data) {
 			if (b == root) {
@@ -105,12 +120,12 @@ public class Solution {
 			}
 			if (b.start == root.end) {
 				root.add(b);
-				buildDown(b);
+				buildDown(b, index);
 				hasChild = true;
 			} else if (b.end == root.end) {
 				b.changeStartAndEnd();
 				root.add(b);
-				buildDown(b);
+				buildDown(b, index);
 				hasChild = true;
 			}
 		}
@@ -122,7 +137,9 @@ public class Solution {
 	private static class Branch {
 		private int start, end, weight;
 		private Branch parent, left, right;
+		private long weightSumm = 0;
 		private int countChild = 0;
+		private Map<Integer, Long> max = new HashMap<Integer, Long>();
 
 		private void changeStartAndEnd() {
 			int tmp = start;
