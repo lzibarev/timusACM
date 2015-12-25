@@ -45,7 +45,7 @@ public class SolutionTest {
 	public void test9() {
 		input = "9\r\n		1 1\r\n		2 3\r\n		3 6\r\n		4 8\r\n		5 2\r\n		6 4\r\n		7 9\r\n		8 7\r\n9 5\r\n";
 		output = run(input);
-		Assert.assertEquals("3", output);
+		Assert.assertEquals("2", output);
 	}
 
 	@Test

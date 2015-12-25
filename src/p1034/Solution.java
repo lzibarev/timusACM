@@ -2,8 +2,10 @@ package p1034;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 public class Solution {
 
@@ -18,6 +20,7 @@ public class Solution {
 
 	private static List<Point> points = new ArrayList<>();
 	protected static int n;
+	private static List<Set<Point>> ansList = new ArrayList<>();
 
 	protected static void solution(Scanner in, PrintWriter out) {
 		n = in.nextInt();
@@ -58,21 +61,21 @@ public class Solution {
 			if (!map.addPoint(p)) {
 				return 0;
 			}
-			// System.out.println(p);
-			// System.out.println(map);
-			// System.out.println();
 		}
-		// System.out.println(map);
-		Point checkP1 = null;
-		while ((checkP1 = map.nextEmptyPoint(checkP1)) != null) {
+		for (Point checkP1 : p1.getAllpositions()) {
 			if (p1.equals(checkP1)) {
+				continue;
+			}
+			if (map.map[checkP1.x][checkP1.y]) {
 				continue;
 			}
 			if (!map.addPoint1(checkP1)) {
 				continue;
 			}
-			Point checkP2 = null;
-			while ((checkP2 = map.nextEmptyPoint(checkP2)) != null) {
+			for (Point checkP2 : p2.getAllpositions()) {
+				if (map.map[checkP2.x][checkP2.y]) {
+					continue;
+				}
 				if (p2.equals(checkP2)) {
 					continue;
 				}
@@ -85,8 +88,10 @@ public class Solution {
 				if (map.map2[checkP1.x][checkP1.y]) {
 					continue;// пересеклось со второй 1->2
 				}
-				Point checkP3 = null;
-				while ((checkP3 = map.nextEmptyPoint(checkP3)) != null) {
+				for (Point checkP3 : p3.getAllpositions()) {
+					if (map.map[checkP3.x][checkP3.y]) {
+						continue;
+					}
 					if (p3.equals(checkP3)) {
 						continue;
 					}
@@ -105,13 +110,29 @@ public class Solution {
 					if (map.map3[checkP2.x][checkP2.y]) {
 						continue;// 1->2
 					}
-					if (points.contains(checkP1) || points.contains(checkP3) || points.contains(checkP3)) {
-						continue;
+					Set<Point> var = new HashSet<>(points);
+					var.remove(p1);
+					var.remove(p2);
+					var.remove(p3);
+					var.add(checkP1);
+					var.add(checkP2);
+					var.add(checkP3);
+					if (!ansList.contains(var)) {
+						ansList.add(var);
+						ans++;
+						// System.out.println(points);
+						// System.out.println("p1 =" + p1 + " p2 =" + p2 + " p3
+						// =" + p3);
+						// System.out.println("checkP1=" + checkP1 + " checkP2="
+						// + checkP2 + " checkP3=" + checkP3);
+					} else {
+						// System.out.println("***");
+						// System.out.println("p1 =" + p1 + " p2 =" + p2 + " p3
+						// =" + p3);
+						// System.out.println("checkP1=" + checkP1 + " checkP2="
+						// + checkP2 + " checkP3=" + checkP3);
 					}
-					ans++;
-					System.out.println(points);
-					System.out.println("p1     =" + p1 + " p2     =" + p2 + " p3     =" + p3);
-					System.out.println("checkP1=" + checkP1 + " checkP2=" + checkP2 + " checkP3=" + checkP3);
+					// System.out.println();
 				}
 			}
 		}
@@ -127,7 +148,7 @@ public class Solution {
 		boolean[][] map3;
 
 		protected boolean addPointCommon(Point p, boolean[][] m) {
-			for (int i = -n + 1; i < n; i++) {
+			for (int i = -n; i < n; i++) {
 				if (!markMap(p.x, p.y + i, m)) {
 					return false;
 				}
@@ -261,5 +282,31 @@ public class Solution {
 			Point p = (Point) obj;
 			return p.x == x && p.y == y;
 		}
+
+		private Set<Point> getAllpositions() {
+			Set<Point> points = new HashSet<>();
+
+			for (int i = -n; i < n; i++) {
+				addToList(points, x + i, y);
+				addToList(points, x, y + i);
+
+				addToList(points, x + i, y + i);
+				addToList(points, x - i, y + i);
+			}
+			return points;
+		}
+
+		private void addToList(Set<Point> points, int x, int y) {
+			if (x < 0 || y < 0 || x >= n || y >= n) {
+			} else {
+				points.add(new Point(x, y));
+			}
+		}
+
+		@Override
+		public int hashCode() {
+			return x + y;
+		}
+
 	}
 }
