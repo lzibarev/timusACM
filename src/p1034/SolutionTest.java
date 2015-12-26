@@ -10,8 +10,6 @@ import java.util.Scanner;
 import org.junit.Assert;
 import org.junit.Test;
 
-import p1034.Solution.Map;
-
 public class SolutionTest {
 	String input;
 	String output;
@@ -46,31 +44,5 @@ public class SolutionTest {
 		input = "9\r\n		1 1\r\n		2 3\r\n		3 6\r\n		4 8\r\n		5 2\r\n		6 4\r\n		7 9\r\n		8 7\r\n9 5\r\n";
 		output = run(input);
 		Assert.assertEquals("2", output);
-	}
-
-	@Test
-	public void test_Map() {
-		Solution.n = 5;
-		Map m = new Map();
-		m.addPoint(new p1034.Solution.Point(0, 0));
-		Assert.assertTrue(m.map[0][0]);
-		Assert.assertTrue(m.map[0][1]);
-		Assert.assertTrue(m.map[0][2]);
-		Assert.assertTrue(m.map[0][3]);
-		Assert.assertTrue(m.map[0][4]);
-		// System.out.println(m);
-	}
-
-	@Test
-	public void test_Map2() {
-		Solution.n = 5;
-		Map m = new Map();
-		m.addPoint(new p1034.Solution.Point(1, 3));
-		Assert.assertTrue(m.map[2][3]);
-		Assert.assertTrue(m.map[2][3]);
-		Assert.assertTrue(m.map[2][3]);
-		Assert.assertTrue(m.map[1][3]);
-		Assert.assertTrue(m.map[0][3]);
-		// System.out.println(m);
 	}
 }
