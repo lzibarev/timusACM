@@ -28,8 +28,17 @@ public class SolutionTest {
 
 	@Test
 	public void test1() throws Exception {
-		Files.readAllLines(new File("src/p1035/input1.txt").toPath()).stream().forEach(s -> input += s + System.lineSeparator());
+		Files.readAllLines(new File("src/p1035/input1.txt").toPath()).stream()
+				.forEach(s -> input += s + System.lineSeparator());
 		output = run(input);
 		Assert.assertEquals("4", output);
+	}
+
+	@Test
+	public void test2() throws Exception {
+		Files.readAllLines(new File("src/p1035/input2.txt").toPath()).stream()
+				.forEach(s -> input += s + System.lineSeparator());
+		output = run(input);
+		Assert.assertEquals("1", output);
 	}
 }
