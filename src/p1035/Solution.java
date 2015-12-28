@@ -4,8 +4,12 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 public class Solution {
 	public static void main(String[] args) {
@@ -17,11 +21,12 @@ public class Solution {
 	}
 
 	private Graph inputData;
+	int m;
 
 	protected void solution(Scanner in, PrintWriter out) {
 		int intputN = in.nextInt();
 		int intputM = Integer.parseInt(in.nextLine().trim());
-		int n = intputN + 1;
+		m = intputM + 1;
 
 		inputData = new Graph();
 		for (int i = 0; i < intputN; i++) {
@@ -32,16 +37,10 @@ public class Solution {
 					//
 				}
 				if (c == '\\' || c == 'X') {
-					Edge e = new Edge();
-					e.x = i * n + j;
-					e.y = (i + 1) * n + j + 1;
-					inputData.addEdge1(e);
+					addLeftToRight(i, j, true);
 				}
 				if (c == '/' || c == 'X') {
-					Edge e = new Edge();
-					e.x = i * n + j + 1;
-					e.y = (i + 1) * n + j;
-					inputData.addEdge1(e);
+					addRightToLeft(i, j, true);
 				}
 			}
 		}
@@ -53,85 +52,130 @@ public class Solution {
 				if (c == '.') {
 					//
 				}
+
 				if (c == '\\' || c == 'X') {
-					Edge e = new Edge();
-					e.x = i * n + j;
-					e.y = (i + 1) * n + j + 1;
-					inputData.addEdge2(e);
+					addLeftToRight(i, j, false);
 				}
 				if (c == '/' || c == 'X') {
-					Edge e = new Edge();
-					e.x = i * n + j + 1;
-					e.y = (i + 1) * n + j;
-					inputData.addEdge2(e);
+					addRightToLeft(i, j, false);
 				}
 			}
 		}
 
 		int ans = 0;
 		while (inputData.size() != 0) {
-			Graph max = findMax();
-			inputData.remove(max);
+			Node node = inputData.edges.get(0).n1;
+			maxThread = new HashSet<>();
+			find(true, node, new HashSet<>());
+			find(false, node, new HashSet<>(maxThread));
+			inputData.remove(maxThread);
 			ans++;
 		}
 		out.println(ans);
 	}
 
-	private Graph findMax() {
-		Graph g = new Graph();
-		if (!inputData.edges1.isEmpty()) {
-			g.addEdge1(inputData.edges1.get(0));
+	void addLeftToRight(int i, int j, boolean front) {
+		inputData.addNode(i * m + j + 1, (i + 1) * (m) + 1 + j + 1, front);
+	}
+
+	void addRightToLeft(int i, int j, boolean front) {
+		inputData.addNode(i * m + j + 2, (i + 1) * (m) + j + 1, front);
+	}
+
+	private Set<Edge> maxThread;
+
+	private void find(boolean front, Node n, Set<Edge> e) {
+		if (e.size() > maxThread.size()) {
+			maxThread = new HashSet<>(e);
 		}
-		if (!inputData.edges2.isEmpty()) {
-			g.addEdge2(inputData.edges2.get(0));
+		for (Edge edge : n.edges) {
+			if (edge.front == front && !e.contains(edge)) {
+				e.add(edge);
+				Node nextNode = edge.next(n);
+				find(!front, nextNode, e);
+				e.remove(edge);
+			}
 		}
-		return g;
 	}
 
 	private static class Graph {
-		List<Edge> edges1 = new ArrayList<>();
-		List<Edge> edges2 = new ArrayList<>();
+		List<Edge> edges = new ArrayList<>();
+		Map<Integer, Node> nodes = new HashMap<>();
 
-		void addEdge1(Edge e) {
-			edges1.add(e);
-		}
-
-		void addEdge2(Edge e) {
-			edges2.add(e);
-		}
-
-		public void remove(Graph max) {
-			for (Edge edge : max.edges1) {
-				edges1.remove(edge);
+		void addNode(int x, int y, boolean front) {
+			if (y == 22 || x == 22) {
+				System.out.println();
 			}
-			for (Edge edge : max.edges2) {
-				edges2.remove(edge);
+			Edge e = new Edge();
+			e.front = front;
+			nodes.putIfAbsent(x, new Node(x));
+			nodes.putIfAbsent(y, new Node(y));
+			e.n1 = nodes.get(x);
+			e.n2 = nodes.get(y);
+			e.n1.edges.add(e);
+			e.n2.edges.add(e);
+			edges.add(e);
+		}
+
+		public void remove(Set<Edge> thread) {
+			for (Edge edge : thread) {
+				edges.remove(edge);
 			}
 		}
 
 		int size() {
-			return edges1.size() + edges2.size();
+			return edges.size();
+		}
+	}
+
+	private static class Node {
+		final int index;
+
+		Node(int index) {
+			this.index = index;
+		}
+
+		List<Edge> edges = new ArrayList<>();
+
+		@Override
+		public String toString() {
+			return index + "";
 		}
 	}
 
 	private static class Edge {
-		int x, y;
+		Node n1, n2;
+		boolean front;
 
 		@Override
 		public int hashCode() {
-			return x + y;
+			return n1.index + n1.index;
+		}
+
+		public Node next(Node n) {
+			if (n1 == n)
+				return n2;
+			return n1;
 		}
 
 		@Override
 		public boolean equals(Object obj) {
 			Edge e = (Edge) obj;
-			if (x == e.x && y == e.y) {
+			if (e.front != front) {
+				return false;
+			}
+			if (n1 == e.n1 && n2 == e.n2) {
 				return true;
 			}
-			if (y == e.x && x == e.y) {
+			if (n2 == e.n1 && n1 == e.n2) {
 				return true;
 			}
 			return false;
+		}
+
+		@Override
+		public String toString() {
+			return n1 + " " + n2 + " " + front;
 		}
 	}
 

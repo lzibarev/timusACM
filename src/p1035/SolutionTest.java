@@ -41,4 +41,20 @@ public class SolutionTest {
 		output = run(input);
 		Assert.assertEquals("1", output);
 	}
+
+	@Test
+	public void test3() throws Exception {
+		Files.readAllLines(new File("src/p1035/input3.txt").toPath()).stream()
+				.forEach(s -> input += s + System.lineSeparator());
+		output = run(input);
+		Assert.assertEquals("2", output);
+	}
+
+	@Test
+	public void test4() throws Exception {
+		Files.readAllLines(new File("src/p1035/input4.txt").toPath()).stream()
+				.forEach(s -> input += s + System.lineSeparator());
+		output = run(input);
+		Assert.assertEquals("4", output);
+	}
 }
