@@ -4,6 +4,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -64,7 +65,7 @@ public class Solution {
 
 		int ans = 0;
 		while (inputData.size() != 0) {
-			Node node = inputData.edges.get(0).n1;
+			Node node = inputData.getStartNode();
 			maxThread = new HashSet<>();
 			find(true, node, new HashSet<>());
 			find(false, node, new HashSet<>(maxThread));
@@ -88,6 +89,7 @@ public class Solution {
 		if (e.size() > maxThread.size()) {
 			maxThread = new HashSet<>(e);
 		}
+		findAndRemoveCercle(front, n, n);
 		for (Edge edge : n.edges) {
 			if (edge.front == front && !e.contains(edge)) {
 				e.add(edge);
@@ -98,14 +100,39 @@ public class Solution {
 		}
 	}
 
+	private boolean findAndRemoveCercle(boolean front, Node root, Node n) {
+		List<Edge> list = new ArrayList<>();
+		if (findCercle(front, root, n, list)) {
+			inputData.remove(list);
+			for (Edge edge : list) {
+				findAndRemoveCercle(!edge.front, edge.n2, edge.n2);
+			}
+		}
+		return false;
+	}
+
+	private boolean findCercle(boolean front, Node root, Node n, List<Edge> list) {
+		for (Edge edge : n.edges) {
+			if (edge.front == front && !list.contains(edge)) {
+				list.add(edge);
+				Node nextNode = edge.next(n);
+				if (edge.n2 == root) {
+					return true;
+				}
+				if (findCercle(!front, root, nextNode, list)) {
+					return true;
+				}
+				list.remove(list.size() - 1);
+			}
+		}
+		return false;
+	}
+
 	private static class Graph {
 		List<Edge> edges = new ArrayList<>();
 		Map<Integer, Node> nodes = new HashMap<>();
 
 		void addNode(int x, int y, boolean front) {
-			if (y == 22 || x == 22) {
-				System.out.println();
-			}
 			Edge e = new Edge();
 			e.front = front;
 			nodes.putIfAbsent(x, new Node(x));
@@ -117,9 +144,26 @@ public class Solution {
 			edges.add(e);
 		}
 
-		public void remove(Set<Edge> thread) {
+		Node getStartNode() {
+			for (Node n : nodes.values()) {
+				int front = 0;
+				int notFront = 0;
+				for (Edge edge : n.edges) {
+					front += edge.front ? 1 : 0;
+					notFront += edge.front ? 0 : 1;
+				}
+				if (front != notFront) {
+					return n;
+				}
+			}
+			return edges.get(0).n1;
+		}
+
+		public void remove(Collection<Edge> thread) {
 			for (Edge edge : thread) {
 				edges.remove(edge);
+				edge.n1.edges.remove(edge);
+				edge.n2.edges.remove(edge);
 			}
 		}
 
@@ -153,9 +197,11 @@ public class Solution {
 		}
 
 		public Node next(Node n) {
-			if (n1 == n)
-				return n2;
-			return n1;
+			if (n1 != n) {// за одно поменяем ориентацию для удобства
+				n2 = n1;
+				n1 = n;
+			}
+			return n2;
 		}
 
 		@Override
