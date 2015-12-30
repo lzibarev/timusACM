@@ -115,4 +115,29 @@ public class SolutionTest {
 		output = run(input);
 		Assert.assertEquals("2", output);
 	}
+
+	@Test
+	public void test10() throws Exception {
+		Files.readAllLines(new File("src/p1035/input10.txt").toPath()).stream()
+				.forEach(s -> input += s + System.lineSeparator());
+		output = run(input);
+		Assert.assertEquals("2", output);
+	}
+
+	@Test
+	public void test200() throws Exception {
+		Files.readAllLines(new File("src/p1035/input200.txt").toPath()).stream()
+				.forEach(s -> input += s + System.lineSeparator());
+		output = run(input);
+		Assert.assertEquals("2", output);
+	}
+
+	@Test
+	public void test100() throws Exception {
+		Files.readAllLines(new File("src/p1035/input100.txt").toPath()).stream()
+				.forEach(s -> input += s + System.lineSeparator());
+		output = run(input);
+		Assert.assertEquals("2", output);
+	}
+
 }
