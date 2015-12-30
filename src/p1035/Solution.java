@@ -63,16 +63,79 @@ public class Solution {
 				}
 			}
 		}
+
 		int ans = 0;
 		while (inputData.size() != 0) {
-			Node node = inputData.getStartNode();
-			maxThread = new HashSet<>();
-			find(true, node, new HashSet<>());
-			find(false, node, new HashSet<>(maxThread));
-			inputData.remove(maxThread);
-			ans++;
+			long start1 = System.currentTimeMillis();
+			List<Edge> graph = getGraph();
+			// System.out.println(System.currentTimeMillis() - start1 + " :" + graph.size());
+			int countOfOdd = 0;
+			Map<Integer, Integer> count = new HashMap<>();
+			for (Edge edge : graph) {
+				count.putIfAbsent(edge.n1.index, 0);
+				count.put(edge.n1.index, count.get(edge.n1.index) + 1);
+
+				count.putIfAbsent(edge.n2.index, 0);
+				count.put(edge.n2.index, count.get(edge.n2.index) + 1);
+			}
+			for (Integer i : count.values()) {
+				if (i % 2 == 1) {
+					countOfOdd++;
+				}
+			}
+			int ansNew = countOfOdd / 2;
+			if (ansNew == 0) {
+				ansNew = 1;
+			}
+			ans += ansNew;
+			long start2 = System.currentTimeMillis();
+			inputData.remove(graph);
+			// System.out.println(System.currentTimeMillis() - start2 + " : remove");
 		}
 		out.println(ans);
+	}
+
+	private List<Edge> getGraph() {
+		List<Edge> list = new ArrayList<>();
+		Edge edge = inputData.edges.iterator().next();
+		list.add(edge);
+		edge.checked = true;
+		Try t1 = new Try();
+		t1.e = edge;
+		t1.n = edge.n1;
+
+		Try t2 = new Try();
+		t2.e = edge;
+		t2.n = edge.n2;
+
+		LinkedList<Try> queue = new LinkedList<>();
+		queue.add(t1);
+		queue.add(t2);
+		while (!queue.isEmpty()) {
+			Try current = queue.pollFirst();
+			for (Edge e : current.n.edges) {
+				if (e.checked) {
+					continue;
+				}
+				if (e.front == current.e.front) {
+					continue;
+				}
+				Try t = new Try();
+				t.e = e;
+				t.n = e.next(current.n);
+				e.checked = true;
+				list.add(e);
+				queue.addLast(t);
+			}
+
+		}
+
+		return list;
+	}
+
+	private static class Try {
+		Node n;
+		Edge e;
 	}
 
 	void addLeftToRight(int i, int j, boolean front) {
@@ -83,100 +146,9 @@ public class Solution {
 		inputData.addNode(i * m + j + 2, (i + 1) * (m) + j + 1, front);
 	}
 
-	private Set<Edge> maxThread;
-
-	private void find(boolean front, Node n, Set<Edge> e) {
-		if (e.size() > maxThread.size()) {
-			maxThread = new HashSet<>(e);
-		}
-		findAndRemoveCercle(front, n, n);
-		for (Edge edge : n.edges) {
-			if (edge.front == front && !e.contains(edge)) {
-				e.add(edge);
-				Node nextNode = edge.next(n);
-				find(!front, nextNode, e);
-				e.remove(edge);
-			}
-		}
-	}
-
-	int count = 0;
-
-	private boolean findAndRemoveCercle(boolean front, Node root, Node n) {
-		List<Edge> list = findCercle(front, root);
-		if (list != null) {
-			inputData.remove(list);
-			for (Edge edge : list) {
-				findAndRemoveCercle(!edge.front, edge.n2, edge.n2);
-			}
-		}
-		return false;
-	}
-
-	private static class Ans {
-		Node n;
-		Edge e;
-	}
-
-	private List<Edge> findCercle(boolean front, Node root) {
-		LinkedList<Ans> nextNodes = new LinkedList<>();
-		Ans a = new Ans();
-		a.n = root;
-		a.e = null;
-		nextNodes.add(a);
-		while (!nextNodes.isEmpty()) {
-			a = nextNodes.getFirst();
-			Node n = a.n;
-			for (Edge edge : n.edges) {
-				Node nextNode = edge.next(n);
-				if (edge.n2 == root) {
-					List<Edge> list = new ArrayList<>();
-					while (a.e != null) {
-
-					}
-					return list;
-				}
-				a = new Ans();
-				a.n = nextNode;
-				a.e = edge;
-				nextNodes.addLast(a);
-			}
-
-			// if (edge.front == front && !list.contains(edge)) {
-			// list.add(edge);
-			// Node nextNode = edge.next(n);
-			// if (edge.n2 == root) {
-			// return true;
-			// }
-			// if (findCercle(!front, root, nextNode, list)) {
-			// return true;
-			// }
-			// list.remove(list.size() - 1);
-			// }
-		}
-		return null;
-	}
-
-	private boolean findCercleDeep(boolean front, Node root, Node n, Set<Edge> list) {
-		for (Edge edge : n.edges) {
-			if (edge.front == front && !list.contains(edge)) {
-				list.add(edge);
-				Node nextNode = edge.next(n);
-				if (edge.n2 == root) {
-					return true;
-				}
-				if (findCercleDeep(!front, root, nextNode, list)) {
-					return true;
-				}
-				list.remove(list.size() - 1);
-			}
-		}
-		return false;
-	}
-
 	private static class Graph {
-		List<Edge> edges = new ArrayList<>();
-		Map<Integer, Node> nodes = new HashMap<>();
+		static Map<Integer, Node> nodes = new HashMap<>();
+		Set<Edge> edges = new HashSet<>();
 
 		void addNode(int x, int y, boolean front) {
 			Edge e = new Edge();
@@ -188,21 +160,6 @@ public class Solution {
 			e.n1.edges.add(e);
 			e.n2.edges.add(e);
 			edges.add(e);
-		}
-
-		Node getStartNode() {
-			for (Node n : nodes.values()) {
-				int front = 0;
-				int notFront = 0;
-				for (Edge edge : n.edges) {
-					front += edge.front ? 1 : 0;
-					notFront += edge.front ? 0 : 1;
-				}
-				if (front != notFront) {
-					return n;
-				}
-			}
-			return edges.get(0).n1;
 		}
 
 		public void remove(Collection<Edge> thread) {
@@ -236,6 +193,7 @@ public class Solution {
 	private static class Edge {
 		Node n1, n2;
 		boolean front;
+		boolean checked;
 
 		@Override
 		public int hashCode() {
