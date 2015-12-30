@@ -113,11 +113,28 @@ public class Solution {
 		queue.add(t2);
 		while (!queue.isEmpty()) {
 			Try current = queue.pollFirst();
+			int c1 = 0;
+			int c2 = 0;
 			for (Edge e : current.n.edges) {
-				if (e.checked) {
-					continue;
+				c1 += e.front ? 0 : 1;
+				c2 += e.front ? 1 : 0;
+			}
+			c1 = Math.min(c1, c2);
+			c2 = Math.min(c1, c2);
+			for (Edge e : current.n.edges) {
+				if (e.front) {
+					if (c1 == 0) {
+						continue;
+					}
+					c1--;
 				}
-				if (e.front == current.e.front) {
+				if (!e.front) {
+					if (c2 == 0) {
+						continue;
+					}
+					c2--;
+				}
+				if (e.checked) {
 					continue;
 				}
 				Try t = new Try();
