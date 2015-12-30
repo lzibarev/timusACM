@@ -3,13 +3,8 @@ package p1035;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -26,11 +21,13 @@ public class Solution {
 	int m;
 
 	protected void solution(Scanner in, PrintWriter out) {
+		long start0 = System.currentTimeMillis();
 		int intputN = in.nextInt();
 		int intputM = Integer.parseInt(in.nextLine().trim());
 		m = intputM + 1;
 
 		inputData = new Graph();
+		inputData.nodes = new Node[(intputN + 2) * (m + 1)];
 		for (int i = 0; i < intputN; i++) {
 			String line = in.nextLine();
 			for (int j = 0; j < intputM; j++) {
@@ -63,96 +60,22 @@ public class Solution {
 				}
 			}
 		}
-
+		// System.out.println("prepare " + (System.currentTimeMillis() - start0));
 		int ans = 0;
+		long start1 = System.currentTimeMillis();
 		while (inputData.size() != 0) {
-			long start1 = System.currentTimeMillis();
-			List<Edge> graph = getGraph();
-			// System.out.println(System.currentTimeMillis() - start1 + " :" + graph.size());
-			int countOfOdd = 0;
-			Map<Integer, Integer> count = new HashMap<>();
-			for (Edge edge : graph) {
-				count.putIfAbsent(edge.n1.index, 0);
-				count.put(edge.n1.index, count.get(edge.n1.index) + 1);
-
-				count.putIfAbsent(edge.n2.index, 0);
-				count.put(edge.n2.index, count.get(edge.n2.index) + 1);
-			}
-			for (Integer i : count.values()) {
-				if (i % 2 == 1) {
-					countOfOdd++;
-				}
-			}
-			int ansNew = countOfOdd / 2;
-			if (ansNew == 0) {
-				ansNew = 1;
-			}
-			ans += ansNew;
 			long start2 = System.currentTimeMillis();
-			inputData.remove(graph);
-			// System.out.println(System.currentTimeMillis() - start2 + " : remove");
+			Node node = inputData.getStartNode();
+			maxThread = new HashSet<>();
+			find(true, node, new HashSet<>());
+			find(false, node, new HashSet<>(maxThread));
+			inputData.remove(maxThread);
+			ans++;
+			// System.out.println("iteration " + (System.currentTimeMillis() - start2));
 		}
+		// System.out.println("total " + (System.currentTimeMillis() - start1));
 		out.println(ans);
-	}
-
-	private List<Edge> getGraph() {
-		List<Edge> list = new ArrayList<>();
-		Edge edge = inputData.edges.iterator().next();
-		list.add(edge);
-		edge.checked = true;
-		Try t1 = new Try();
-		t1.e = edge;
-		t1.n = edge.n1;
-
-		Try t2 = new Try();
-		t2.e = edge;
-		t2.n = edge.n2;
-
-		LinkedList<Try> queue = new LinkedList<>();
-		queue.add(t1);
-		queue.add(t2);
-		while (!queue.isEmpty()) {
-			Try current = queue.pollFirst();
-			int c1 = 0;
-			int c2 = 0;
-			for (Edge e : current.n.edges) {
-				c1 += e.front ? 0 : 1;
-				c2 += e.front ? 1 : 0;
-			}
-			c1 = Math.min(c1, c2);
-			c2 = Math.min(c1, c2);
-			for (Edge e : current.n.edges) {
-				if (e.front) {
-					if (c1 == 0) {
-						continue;
-					}
-					c1--;
-				}
-				if (!e.front) {
-					if (c2 == 0) {
-						continue;
-					}
-					c2--;
-				}
-				if (e.checked) {
-					continue;
-				}
-				Try t = new Try();
-				t.e = e;
-				t.n = e.next(current.n);
-				e.checked = true;
-				list.add(e);
-				queue.addLast(t);
-			}
-
-		}
-
-		return list;
-	}
-
-	private static class Try {
-		Node n;
-		Edge e;
+		// System.out.println("test " + (System.currentTimeMillis() - start0));
 	}
 
 	void addLeftToRight(int i, int j, boolean front) {
@@ -163,20 +86,87 @@ public class Solution {
 		inputData.addNode(i * m + j + 2, (i + 1) * (m) + j + 1, front);
 	}
 
+	private Set<Edge> maxThread;
+
+	private void find(boolean front, Node n, Set<Edge> e) {
+		if (e.size() > maxThread.size()) {
+			maxThread = new HashSet<>(e);
+		}
+		findAndRemoveCercle(front, n, n);
+		for (Edge edge : n.edges) {
+			if (edge.front == front) {// && !e.contains(edge)
+				e.add(edge);
+				Node nextNode = edge.next(n);
+				find(!front, nextNode, e);
+				e.remove(edge);
+			}
+		}
+	}
+
+	private boolean findAndRemoveCercle(boolean front, Node root, Node n) {
+		Set<Edge> list = new HashSet<>();
+		if (findCercle(front, root, n, list)) {
+			inputData.remove(list);
+			for (Edge edge : list) {
+				findAndRemoveCercle(!edge.front, edge.n2, edge.n2);
+			}
+		}
+		return false;
+	}
+
+	private boolean findCercle(boolean front, Node root, Node n, Set<Edge> list) {
+		for (Edge edge : n.edges) {
+			if (edge.front == front && !list.contains(edge)) {
+				list.add(edge);
+				Node nextNode = edge.next(n);
+				if (edge.n2 == root) {
+					return true;
+				}
+				if (findCercle(!front, root, nextNode, list)) {
+					return true;
+				}
+				list.remove(edge);
+			}
+		}
+		return false;
+	}
+
 	private static class Graph {
-		static Map<Integer, Node> nodes = new HashMap<>();
 		Set<Edge> edges = new HashSet<>();
+		Node[] nodes;
 
 		void addNode(int x, int y, boolean front) {
 			Edge e = new Edge();
 			e.front = front;
-			nodes.putIfAbsent(x, new Node(x));
-			nodes.putIfAbsent(y, new Node(y));
-			e.n1 = nodes.get(x);
-			e.n2 = nodes.get(y);
+			if (nodes[x] == null) {
+				nodes[x] = new Node(x);
+			}
+			if (nodes[y] == null) {
+				nodes[y] = new Node(y);
+			}
+			e.n1 = nodes[x];
+			e.n2 = nodes[y];
 			e.n1.edges.add(e);
 			e.n2.edges.add(e);
 			edges.add(e);
+		}
+
+		Node getStartNode() {
+			for (Node n : nodes) {
+				if (n == null) {
+					continue;
+				}
+				int front = 0;
+				int notFront = 0;
+				for (Edge edge : n.edges) {
+					front += edge.front ? 1 : 0;
+					notFront += edge.front ? 0 : 1;
+				}
+				if (front != notFront) {
+					return n;
+				}
+			}
+			return edges.iterator().next().n1;
 		}
 
 		public void remove(Collection<Edge> thread) {
@@ -199,7 +189,7 @@ public class Solution {
 			this.index = index;
 		}
 
-		List<Edge> edges = new ArrayList<>();
+		Set<Edge> edges = new HashSet<>();
 
 		@Override
 		public String toString() {
@@ -210,12 +200,6 @@ public class Solution {
 	private static class Edge {
 		Node n1, n2;
 		boolean front;
-		boolean checked;
-
-		@Override
-		public int hashCode() {
-			return n1.index + n2.index;
-		}
 
 		public Node next(Node n) {
 			if (n1 != n) {// за одно поменяем ориентацию для удобства
@@ -223,21 +207,6 @@ public class Solution {
 				n1 = n;
 			}
 			return n2;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			Edge e = (Edge) obj;
-			if (e.front != front) {
-				return false;
-			}
-			if (n1.index == e.n1.index && n2.index == e.n2.index) {
-				return true;
-			}
-			if (n2.index == e.n1.index && n1.index == e.n2.index) {
-				return true;
-			}
-			return false;
 		}
 
 		@Override

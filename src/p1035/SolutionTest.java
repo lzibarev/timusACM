@@ -141,7 +141,6 @@ public class SolutionTest {
 	}
 
 	@Test
-	// @Ignore
 	public void test200() throws Exception {
 		Files.readAllLines(new File("src/p1035/input200.txt").toPath()).stream().forEach(s -> input += s + System.lineSeparator());
 		output = run(input);
