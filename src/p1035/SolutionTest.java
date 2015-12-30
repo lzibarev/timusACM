@@ -28,6 +28,14 @@ public class SolutionTest {
 	}
 
 	@Test
+	public void test_3() throws Exception {
+		Files.readAllLines(new File("src/p1035/input-3.txt").toPath()).stream()
+				.forEach(s -> input += s + System.lineSeparator());
+		output = run(input);
+		Assert.assertEquals("1", output);
+	}
+
+	@Test
 	public void test_2() throws Exception {
 		Files.readAllLines(new File("src/p1035/input-2.txt").toPath()).stream()
 				.forEach(s -> input += s + System.lineSeparator());
