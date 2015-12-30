@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -62,7 +63,6 @@ public class Solution {
 				}
 			}
 		}
-
 		int ans = 0;
 		while (inputData.size() != 0) {
 			Node node = inputData.getStartNode();
@@ -100,9 +100,11 @@ public class Solution {
 		}
 	}
 
+	int count = 0;
+
 	private boolean findAndRemoveCercle(boolean front, Node root, Node n) {
-		List<Edge> list = new ArrayList<>();
-		if (findCercle(front, root, n, list)) {
+		List<Edge> list = findCercle(front, root);
+		if (list != null) {
 			inputData.remove(list);
 			for (Edge edge : list) {
 				findAndRemoveCercle(!edge.front, edge.n2, edge.n2);
@@ -111,7 +113,51 @@ public class Solution {
 		return false;
 	}
 
-	private boolean findCercle(boolean front, Node root, Node n, List<Edge> list) {
+	private static class Ans {
+		Node n;
+		Edge e;
+	}
+
+	private List<Edge> findCercle(boolean front, Node root) {
+		LinkedList<Ans> nextNodes = new LinkedList<>();
+		Ans a = new Ans();
+		a.n = root;
+		a.e = null;
+		nextNodes.add(a);
+		while (!nextNodes.isEmpty()) {
+			a = nextNodes.getFirst();
+			Node n = a.n;
+			for (Edge edge : n.edges) {
+				Node nextNode = edge.next(n);
+				if (edge.n2 == root) {
+					List<Edge> list = new ArrayList<>();
+					while (a.e != null) {
+
+					}
+					return list;
+				}
+				a = new Ans();
+				a.n = nextNode;
+				a.e = edge;
+				nextNodes.addLast(a);
+			}
+
+			// if (edge.front == front && !list.contains(edge)) {
+			// list.add(edge);
+			// Node nextNode = edge.next(n);
+			// if (edge.n2 == root) {
+			// return true;
+			// }
+			// if (findCercle(!front, root, nextNode, list)) {
+			// return true;
+			// }
+			// list.remove(list.size() - 1);
+			// }
+		}
+		return null;
+	}
+
+	private boolean findCercleDeep(boolean front, Node root, Node n, Set<Edge> list) {
 		for (Edge edge : n.edges) {
 			if (edge.front == front && !list.contains(edge)) {
 				list.add(edge);
@@ -119,7 +165,7 @@ public class Solution {
 				if (edge.n2 == root) {
 					return true;
 				}
-				if (findCercle(!front, root, nextNode, list)) {
+				if (findCercleDeep(!front, root, nextNode, list)) {
 					return true;
 				}
 				list.remove(list.size() - 1);
@@ -193,7 +239,7 @@ public class Solution {
 
 		@Override
 		public int hashCode() {
-			return n1.index + n1.index;
+			return n1.index + n2.index;
 		}
 
 		public Node next(Node n) {
@@ -210,10 +256,10 @@ public class Solution {
 			if (e.front != front) {
 				return false;
 			}
-			if (n1 == e.n1 && n2 == e.n2) {
+			if (n1.index == e.n1.index && n2.index == e.n2.index) {
 				return true;
 			}
-			if (n2 == e.n1 && n1 == e.n2) {
+			if (n2.index == e.n1.index && n1.index == e.n2.index) {
 				return true;
 			}
 			return false;
