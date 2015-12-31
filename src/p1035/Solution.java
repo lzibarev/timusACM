@@ -77,8 +77,8 @@ public class Solution {
 		// Пройтись и удалить любые - не обязательно самые быстрые маршруты при этом учесть какие циклы были достигнуты.
 
 		// Прибавить все не достигнутые циклы
-
 		while (inputData.size() != 0) {
+			inputData.removed = false;
 			long start2 = System.currentTimeMillis();
 			Node node = inputData.getStartNode();
 			List<Edge> thread = find(true, node);
@@ -86,6 +86,10 @@ public class Solution {
 			thread = find(false, node);
 			inputData.remove(thread);
 			ans++;
+			if (!inputData.removed) {
+				// System.out.println("!!!");
+				break;
+			}
 			// System.out.println("iteration " + (System.currentTimeMillis() - start2));
 		}
 		// System.out.println("total " + (System.currentTimeMillis() - start1));
@@ -114,7 +118,10 @@ public class Solution {
 		return new ArrayList<>();
 	}
 
-	private boolean findAndRemoveCercle(Node root) {
+	private void findAndRemoveCercle(Node root) {
+		if (root.noCycle) {
+			return;
+		}
 		Set<Edge> list = new HashSet<>();
 		if (findCercle(true, root, root, list)) {
 			inputData.remove(list);
@@ -122,7 +129,7 @@ public class Solution {
 				findAndRemoveCercle(edge.n2);
 			}
 		}
-		return false;
+		root.noCycle = true;
 	}
 
 	private boolean findCercle(boolean front, Node root, Node n, Set<Edge> list) {
@@ -145,6 +152,7 @@ public class Solution {
 	private static class Graph {
 		Set<Edge> edges = new HashSet<>();
 		Node[] nodes;
+		boolean removed = false;
 
 		void addNode(int x, int y, boolean front) {
 			Edge e = new Edge();
@@ -181,9 +189,10 @@ public class Solution {
 		}
 
 		public void remove(Collection<Edge> thread) {
-			if (thread == null) {
+			if (thread == null || thread.isEmpty()) {
 				return;
 			}
+			removed = true;
 			for (Edge edge : thread) {
 				edges.remove(edge);
 				edge.n1.edges.remove(edge);
@@ -198,6 +207,7 @@ public class Solution {
 
 	private static class Node {
 		final int index;
+		boolean noCycle = false;
 
 		Node(int index) {
 			this.index = index;
