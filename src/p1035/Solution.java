@@ -3,8 +3,10 @@ package p1035;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -63,13 +65,26 @@ public class Solution {
 		// System.out.println("prepare " + (System.currentTimeMillis() - start0));
 		int ans = 0;
 		long start1 = System.currentTimeMillis();
+
+		// Удалить все циклы и выставить циклас номера
+//		for (Node n : inputData.nodes) {
+//			if (n == null) {
+//				continue;
+//			}
+//			findAndRemoveCercle(n);
+//		}
+
+		// Пройтись и удалить любые - не обязательно самые быстрые маршруты при этом учесть какие циклы были достигнуты.
+
+		// Прибавить все не достигнутые циклы
+
 		while (inputData.size() != 0) {
 			long start2 = System.currentTimeMillis();
 			Node node = inputData.getStartNode();
-			maxThread = new HashSet<>();
-			find(true, node, new HashSet<>());
-			find(false, node, new HashSet<>(maxThread));
-			inputData.remove(maxThread);
+			List<Edge> thread = find(true, node);
+			inputData.remove(thread);
+			thread = find(false, node);
+			inputData.remove(thread);
 			ans++;
 			// System.out.println("iteration " + (System.currentTimeMillis() - start2));
 		}
@@ -86,29 +101,25 @@ public class Solution {
 		inputData.addNode(i * m + j + 2, (i + 1) * (m) + j + 1, front);
 	}
 
-	private Set<Edge> maxThread;
-
-	private void find(boolean front, Node n, Set<Edge> e) {
-		if (e.size() > maxThread.size()) {
-			maxThread = new HashSet<>(e);
-		}
-		findAndRemoveCercle(front, n, n);
+	private List<Edge> find(boolean front, Node n) {
+		findAndRemoveCercle(n);
 		for (Edge edge : n.edges) {
 			if (edge.front == front) {// && !e.contains(edge)
-				e.add(edge);
 				Node nextNode = edge.next(n);
-				find(!front, nextNode, e);
-				e.remove(edge);
+				List<Edge> set = find(!front, nextNode);
+				set.add(edge);
+				return set;
 			}
 		}
+		return new ArrayList<>();
 	}
 
-	private boolean findAndRemoveCercle(boolean front, Node root, Node n) {
+	private boolean findAndRemoveCercle(Node root) {
 		Set<Edge> list = new HashSet<>();
-		if (findCercle(front, root, n, list)) {
+		if (findCercle(true, root, root, list)) {
 			inputData.remove(list);
 			for (Edge edge : list) {
-				findAndRemoveCercle(!edge.front, edge.n2, edge.n2);
+				findAndRemoveCercle(edge.n2);
 			}
 		}
 		return false;
@@ -170,6 +181,9 @@ public class Solution {
 		}
 
 		public void remove(Collection<Edge> thread) {
+			if (thread == null) {
+				return;
+			}
 			for (Edge edge : thread) {
 				edges.remove(edge);
 				edge.n1.edges.remove(edge);
