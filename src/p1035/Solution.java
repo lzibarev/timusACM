@@ -5,11 +5,9 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
 
 public class Solution {
 	public static void main(String[] args) {
@@ -21,14 +19,14 @@ public class Solution {
 	}
 
 	private Graph inputData;
-	int m;
+	int m, max;
 
 	protected void solution(Scanner in, PrintWriter out) {
 		long start0 = System.currentTimeMillis();
 		int intputN = in.nextInt();
 		int intputM = Integer.parseInt(in.nextLine().trim());
 		m = intputM + 1;
-
+		max = (intputM + 1) * (intputN + 1) + 1;
 		inputData = new Graph();
 		inputData.nodes = new Node[(intputN + 2) * (m + 1)];
 		for (int i = 0; i < intputN; i++) {
@@ -71,24 +69,60 @@ public class Solution {
 		// Пройтись и удалить любые - не обязательно самые быстрые маршруты при этом учесть какие циклы были достигнуты.
 
 		// Прибавить все не достигнутые циклы
-		while (inputData.size() != 0) {
-			inputData.removed = false;
-			long start2 = System.currentTimeMillis();
-			Node node = inputData.getStartNode();
-			List<Edge> thread = find(true, node);
-			inputData.remove(thread);
-			thread = find(false, node);
-			inputData.remove(thread);
-			ans++;
-			if (!inputData.removed) {
-				// System.out.println("!!!");
-				break;
+		for (int i = 0; i < max; i++) {
+			Node start = inputData.nodes[i];
+			if (start == null) {
+				continue;
 			}
+			i--;
+			long start2 = System.currentTimeMillis();
+			List<Edge> graph = find(start);
+			// System.out.println("find " + (System.currentTimeMillis() - start2));
+			ans += getCount(graph);
+			// System.out.println("count " + (System.currentTimeMillis() - start2));
+			inputData.remove(graph);
+			// System.out.println("remove " + (System.currentTimeMillis() - start2));
+			// start = inputData.getStartNode();
 			// System.out.println("iteration " + (System.currentTimeMillis() - start2));
 		}
 		// System.out.println("total " + (System.currentTimeMillis() - start1));
 		out.println(ans);
 		// System.out.println("test " + (System.currentTimeMillis() - start0));
+	}
+
+	private int getCount(List<Edge> graph) {
+		int[] front = new int[max];
+		int[] back = new int[max];
+		for (Edge edge : graph) {
+			if (edge.front) {
+				front[edge.n1.index] += 1;
+				front[edge.n2.index] += 1;
+			} else {
+				back[edge.n1.index] += 1;
+				back[edge.n2.index] += 1;
+			}
+		}
+
+		int cFront = 0;
+		int cBack = 0;
+		for (int i = 0; i < max; i++) {
+			int countFront = front[i];
+			int countBack = back[i];
+			if (countFront == countBack) {
+				continue;
+			}
+			if (countFront > countBack) {
+				cFront += countFront - countBack;
+			} else {
+				cBack += countBack - countFront;
+			}
+		}
+		// System.out.println(cFront + " " + cBack);
+		int ans = (cFront + cBack) / 2;
+		if (ans == 0) {
+			ans = 1;
+		}
+		return ans;
 	}
 
 	void addLeftToRight(int i, int j, boolean front) {
@@ -99,74 +133,34 @@ public class Solution {
 		inputData.addNode(i * m + j + 2, (i + 1) * (m) + j + 1, front);
 	}
 
-	private List<Edge> find(boolean front, Node n) {
-		findAndRemoveCercle(n);
-		for (Edge edge : n.edges) {
-			if (edge.front == front) {
-				Node nextNode = edge.next(n);
-				List<Edge> set = find(!front, nextNode);
-				set.add(edge);
-				return set;
-			}
-		}
-		return new ArrayList<>();
-	}
+	private List<Edge> find(Node n) {
+		LinkedList<Edge> queue = new LinkedList<>();
+		List<Edge> list = new ArrayList<>();
 
-	private void findAndRemoveCercle(Node root) {
-		LinkedList<Node> queueu = new LinkedList<>();
-		queueu.add(root);
-		while (!queueu.isEmpty()) {
-			root = queueu.pollFirst();
-			List<Edge> list = findCercle(true, root, root, new HashSet<>(), new ArrayList<Edge>());
-			if (list != null) {
-				inputData.remove(list);
-				for (Edge edge : list) {
-					queueu.addLast(edge.n2);
-				}
-			}
-			root.noCycle = true;
-		}
-	}
-
-	private List<Edge> findCercle(boolean front, Node root, Node n, Set<Edge> set, List<Edge> list) {
 		for (Edge edge : n.edges) {
-			if (edge.front == front) {
-				if (set.contains(edge)) {
-					if (true)
-						continue;
-					List<Edge> ans = new ArrayList<>();
-					for (int i = list.size() - 1; i >= 0; i--) {
-						ans.add(list.get(i));
-						if (list.get(i).n1 == edge.n1) {
-							return ans;
-						}
-					}
-					System.out.println("ERROR");
+			edge.setStart(n);
+			queue.addLast(edge);
+		}
+
+		while (!queue.isEmpty()) {
+			Edge e = queue.pollLast();
+			if (e.processed) {
+				continue;
+			}
+			e.processed = true;
+			list.add(e);
+			for (Edge edge : e.n2.edges) {
+				if (!edge.processed) {
+					edge.setStart(e.n2);
+					queue.addLast(edge);
 				}
-				Node nextNode = edge.next(n);
-				if (root.noCycle) {
-					continue;
-				}
-				set.add(edge);
-				list.add(edge);
-				if (edge.n2 == root) {
-					return list;
-				}
-				List<Edge> ans = findCercle(!front, root, nextNode, set, list);
-				if (ans != null) {
-					return ans;
-				}
-				set.remove(edge);
-				list.remove(list.size() - 1);
 			}
 		}
-		return null;
+		return list;
 	}
 
 	private static class Graph {
-		Set<Edge> edges = new HashSet<>();
 		Node[] nodes;
-		boolean removed = false;
 
 		void addNode(int x, int y, boolean front) {
 			Edge e = new Edge();
@@ -181,14 +175,15 @@ public class Solution {
 			e.n2 = nodes[y];
 			e.n1.edges.add(e);
 			e.n2.edges.add(e);
-			edges.add(e);
 		}
 
-		Node getStartNode() {
+		private Node getStartNode() {
+			Node any = null;
 			for (Node n : nodes) {
 				if (n == null) {
 					continue;
 				}
+				any = n;
 				int front = 0;
 				int notFront = 0;
 				for (Edge edge : n.edges) {
@@ -199,35 +194,32 @@ public class Solution {
 					return n;
 				}
 			}
-			return edges.iterator().next().n1;
+			return any;
 		}
 
 		public void remove(Collection<Edge> thread) {
-			if (thread == null || thread.isEmpty()) {
-				return;
-			}
-			removed = true;
 			for (Edge edge : thread) {
-				edges.remove(edge);
-				edge.n1.edges.remove(edge);
-				edge.n2.edges.remove(edge);
+//				edge.n1.edges.remove(edge);
+//				edge.n2.edges.remove(edge);
+//				if (edge.n1.edges.isEmpty()) {
+				nodes[edge.n1.index] = null;
+//				}
+//				if (edge.n2.edges.isEmpty()) {
+				nodes[edge.n2.index] = null;
+//				}
 			}
 		}
 
-		int size() {
-			return edges.size();
-		}
 	}
 
 	private static class Node {
 		final int index;
-		boolean noCycle = false;
 
 		Node(int index) {
 			this.index = index;
 		}
 
-		Set<Edge> edges = new HashSet<>();
+		List<Edge> edges = new ArrayList<>();
 
 		@Override
 		public String toString() {
@@ -238,13 +230,13 @@ public class Solution {
 	private static class Edge {
 		Node n1, n2;
 		boolean front;
+		boolean processed;
 
-		public Node next(Node n) {
-			if (n1 != n) {// за одно поменяем ориентацию для удобства
+		public void setStart(Node n) {
+			if (n1 != n) {// поменяем ориентацию для удобства
 				n2 = n1;
 				n1 = n;
 			}
-			return n2;
 		}
 
 		@Override

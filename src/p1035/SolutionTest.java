@@ -141,6 +141,13 @@ public class SolutionTest {
 	}
 
 	@Test
+	public void test11() throws Exception {
+		Files.readAllLines(new File("src/p1035/input11.txt").toPath()).stream().forEach(s -> input += s + System.lineSeparator());
+		output = run(input);
+		Assert.assertEquals("2", output);
+	}
+
+	@Test
 	public void test200() throws Exception {
 		Files.readAllLines(new File("src/p1035/input200.txt").toPath()).stream().forEach(s -> input += s + System.lineSeparator());
 		output = run(input);
@@ -152,6 +159,13 @@ public class SolutionTest {
 		Files.readAllLines(new File("src/p1035/input100.txt").toPath()).stream().forEach(s -> input += s + System.lineSeparator());
 		output = run(input);
 		Assert.assertEquals("2", output);
+	}
+
+	@Test
+	public void test_5() throws Exception {
+		Files.readAllLines(new File("src/p1035/input-5.txt").toPath()).stream().forEach(s -> input += s + System.lineSeparator());
+		output = run(input);
+		Assert.assertEquals("0", output);
 	}
 
 }
