@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
@@ -112,34 +113,54 @@ public class Solution {
 	}
 
 	private void findAndRemoveCercle(Node root) {
-		Set<Edge> list = new HashSet<>();
-		if (findCercle(true, root, root, list)) {
-			inputData.remove(list);
-			for (Edge edge : list) {
-				findAndRemoveCercle(edge.n2);
+		LinkedList<Node> queueu = new LinkedList<>();
+		queueu.add(root);
+		while (!queueu.isEmpty()) {
+			root = queueu.pollFirst();
+			List<Edge> list = findCercle(true, root, root, new HashSet<>(), new ArrayList<Edge>());
+			if (list != null) {
+				inputData.remove(list);
+				for (Edge edge : list) {
+					queueu.addLast(edge.n2);
+				}
 			}
+			root.noCycle = true;
 		}
-		root.noCycle = true;
 	}
 
-	private boolean findCercle(boolean front, Node root, Node n, Set<Edge> list) {
+	private List<Edge> findCercle(boolean front, Node root, Node n, Set<Edge> set, List<Edge> list) {
 		for (Edge edge : n.edges) {
-			if (edge.front == front && !list.contains(edge)) {
+			if (edge.front == front) {
+				if (set.contains(edge)) {
+					if (true)
+						continue;
+					List<Edge> ans = new ArrayList<>();
+					for (int i = list.size() - 1; i >= 0; i--) {
+						ans.add(list.get(i));
+						if (list.get(i).n1 == edge.n1) {
+							return ans;
+						}
+					}
+					System.out.println("ERROR");
+				}
 				Node nextNode = edge.next(n);
 				if (root.noCycle) {
 					continue;
 				}
+				set.add(edge);
 				list.add(edge);
 				if (edge.n2 == root) {
-					return true;
+					return list;
 				}
-				if (findCercle(!front, root, nextNode, list)) {
-					return true;
+				List<Edge> ans = findCercle(!front, root, nextNode, set, list);
+				if (ans != null) {
+					return ans;
 				}
-				list.remove(edge);
+				set.remove(edge);
+				list.remove(list.size() - 1);
 			}
 		}
-		return false;
+		return null;
 	}
 
 	private static class Graph {
