@@ -34,9 +34,6 @@ public class Solution {
 			String line = in.nextLine();
 			for (int j = 0; j < intputM; j++) {
 				char c = line.charAt(j);
-				if (c == '.') {
-					//
-				}
 				if (c == '\\' || c == 'X') {
 					addLeftToRight(i, j, true);
 				}
@@ -50,10 +47,6 @@ public class Solution {
 			String line = in.nextLine();
 			for (int j = 0; j < intputM; j++) {
 				char c = line.charAt(j);
-				if (c == '.') {
-					//
-				}
-
 				if (c == '\\' || c == 'X') {
 					addLeftToRight(i, j, false);
 				}
@@ -108,7 +101,7 @@ public class Solution {
 	private List<Edge> find(boolean front, Node n) {
 		findAndRemoveCercle(n);
 		for (Edge edge : n.edges) {
-			if (edge.front == front) {// && !e.contains(edge)
+			if (edge.front == front) {
 				Node nextNode = edge.next(n);
 				List<Edge> set = find(!front, nextNode);
 				set.add(edge);
@@ -119,9 +112,6 @@ public class Solution {
 	}
 
 	private void findAndRemoveCercle(Node root) {
-		if (root.noCycle) {
-			return;
-		}
 		Set<Edge> list = new HashSet<>();
 		if (findCercle(true, root, root, list)) {
 			inputData.remove(list);
@@ -135,8 +125,11 @@ public class Solution {
 	private boolean findCercle(boolean front, Node root, Node n, Set<Edge> list) {
 		for (Edge edge : n.edges) {
 			if (edge.front == front && !list.contains(edge)) {
-				list.add(edge);
 				Node nextNode = edge.next(n);
+				if (root.noCycle) {
+					continue;
+				}
+				list.add(edge);
 				if (edge.n2 == root) {
 					return true;
 				}
