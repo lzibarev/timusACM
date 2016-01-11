@@ -5,13 +5,9 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 
 public class Solution {
 	public static void main(String[] args) {
@@ -23,21 +19,20 @@ public class Solution {
 	}
 
 	private Graph inputData;
-	int m;
+	int m, max;
 
 	protected void solution(Scanner in, PrintWriter out) {
+		long start0 = System.currentTimeMillis();
 		int intputN = in.nextInt();
 		int intputM = Integer.parseInt(in.nextLine().trim());
 		m = intputM + 1;
-
+		max = (intputM + 1) * (intputN + 1) + 1;
 		inputData = new Graph();
+		inputData.nodes = new Node[(intputN + 2) * (m + 1)];
 		for (int i = 0; i < intputN; i++) {
 			String line = in.nextLine();
 			for (int j = 0; j < intputM; j++) {
 				char c = line.charAt(j);
-				if (c == '.') {
-					//
-				}
 				if (c == '\\' || c == 'X') {
 					addLeftToRight(i, j, true);
 				}
@@ -51,10 +46,6 @@ public class Solution {
 			String line = in.nextLine();
 			for (int j = 0; j < intputM; j++) {
 				char c = line.charAt(j);
-				if (c == '.') {
-					//
-				}
-
 				if (c == '\\' || c == 'X') {
 					addLeftToRight(i, j, false);
 				}
@@ -63,16 +54,75 @@ public class Solution {
 				}
 			}
 		}
+		// System.out.println("prepare " + (System.currentTimeMillis() - start0));
 		int ans = 0;
-		while (inputData.size() != 0) {
-			Node node = inputData.getStartNode();
-			maxThread = new HashSet<>();
-			find(true, node, new HashSet<>());
-			find(false, node, new HashSet<>(maxThread));
-			inputData.remove(maxThread);
-			ans++;
+		long start1 = System.currentTimeMillis();
+
+		// Удалить все циклы и выставить циклас номера
+//		for (Node n : inputData.nodes) {
+//			if (n == null) {
+//				continue;
+//			}
+//			findAndRemoveCercle(n);
+//		}
+
+		// Пройтись и удалить любые - не обязательно самые быстрые маршруты при этом учесть какие циклы были достигнуты.
+
+		// Прибавить все не достигнутые циклы
+		for (int i = 0; i < max; i++) {
+			Node start = inputData.nodes[i];
+			if (start == null) {
+				continue;
+			}
+			i--;
+			long start2 = System.currentTimeMillis();
+			List<Edge> graph = find(start);
+			// System.out.println("find " + (System.currentTimeMillis() - start2));
+			ans += getCount(graph);
+			// System.out.println("count " + (System.currentTimeMillis() - start2));
+			inputData.remove(graph);
+			// System.out.println("remove " + (System.currentTimeMillis() - start2));
+			// start = inputData.getStartNode();
+			// System.out.println("iteration " + (System.currentTimeMillis() - start2));
 		}
+		// System.out.println("total " + (System.currentTimeMillis() - start1));
 		out.println(ans);
+		// System.out.println("test " + (System.currentTimeMillis() - start0));
+	}
+
+	private int getCount(List<Edge> graph) {
+		int[] front = new int[max];
+		int[] back = new int[max];
+		for (Edge edge : graph) {
+			if (edge.front) {
+				front[edge.n1.index] += 1;
+				front[edge.n2.index] += 1;
+			} else {
+				back[edge.n1.index] += 1;
+				back[edge.n2.index] += 1;
+			}
+		}
+
+		int cFront = 0;
+		int cBack = 0;
+		for (int i = 0; i < max; i++) {
+			int countFront = front[i];
+			int countBack = back[i];
+			if (countFront == countBack) {
+				continue;
+			}
+			if (countFront > countBack) {
+				cFront += countFront - countBack;
+			} else {
+				cBack += countBack - countFront;
+			}
+		}
+		// System.out.println(cFront + " " + cBack);
+		int ans = (cFront + cBack) / 2;
+		if (ans == 0) {
+			ans = 1;
+		}
+		return ans;
 	}
 
 	void addLeftToRight(int i, int j, boolean front) {
@@ -83,115 +133,57 @@ public class Solution {
 		inputData.addNode(i * m + j + 2, (i + 1) * (m) + j + 1, front);
 	}
 
-	private Set<Edge> maxThread;
+	private List<Edge> find(Node n) {
+		LinkedList<Edge> queue = new LinkedList<>();
+		List<Edge> list = new ArrayList<>();
 
-	private void find(boolean front, Node n, Set<Edge> e) {
-		if (e.size() > maxThread.size()) {
-			maxThread = new HashSet<>(e);
-		}
-		findAndRemoveCercle(front, n, n);
 		for (Edge edge : n.edges) {
-			if (edge.front == front && !e.contains(edge)) {
-				e.add(edge);
-				Node nextNode = edge.next(n);
-				find(!front, nextNode, e);
-				e.remove(edge);
-			}
+			edge.setStart(n);
+			queue.addLast(edge);
 		}
-	}
 
-	int count = 0;
-
-	private boolean findAndRemoveCercle(boolean front, Node root, Node n) {
-		List<Edge> list = findCercle(front, root);
-		if (list != null) {
-			inputData.remove(list);
-			for (Edge edge : list) {
-				findAndRemoveCercle(!edge.front, edge.n2, edge.n2);
+		while (!queue.isEmpty()) {
+			Edge e = queue.pollLast();
+			if (e.processed) {
+				continue;
 			}
-		}
-		return false;
-	}
-
-	private static class Ans {
-		Node n;
-		Edge e;
-	}
-
-	private List<Edge> findCercle(boolean front, Node root) {
-		LinkedList<Ans> nextNodes = new LinkedList<>();
-		Ans a = new Ans();
-		a.n = root;
-		a.e = null;
-		nextNodes.add(a);
-		while (!nextNodes.isEmpty()) {
-			a = nextNodes.getFirst();
-			Node n = a.n;
-			for (Edge edge : n.edges) {
-				Node nextNode = edge.next(n);
-				if (edge.n2 == root) {
-					List<Edge> list = new ArrayList<>();
-					while (a.e != null) {
-
-					}
-					return list;
+			e.processed = true;
+			list.add(e);
+			for (Edge edge : e.n2.edges) {
+				if (!edge.processed) {
+					edge.setStart(e.n2);
+					queue.addLast(edge);
 				}
-				a = new Ans();
-				a.n = nextNode;
-				a.e = edge;
-				nextNodes.addLast(a);
-			}
-
-			// if (edge.front == front && !list.contains(edge)) {
-			// list.add(edge);
-			// Node nextNode = edge.next(n);
-			// if (edge.n2 == root) {
-			// return true;
-			// }
-			// if (findCercle(!front, root, nextNode, list)) {
-			// return true;
-			// }
-			// list.remove(list.size() - 1);
-			// }
-		}
-		return null;
-	}
-
-	private boolean findCercleDeep(boolean front, Node root, Node n, Set<Edge> list) {
-		for (Edge edge : n.edges) {
-			if (edge.front == front && !list.contains(edge)) {
-				list.add(edge);
-				Node nextNode = edge.next(n);
-				if (edge.n2 == root) {
-					return true;
-				}
-				if (findCercleDeep(!front, root, nextNode, list)) {
-					return true;
-				}
-				list.remove(list.size() - 1);
 			}
 		}
-		return false;
+		return list;
 	}
 
 	private static class Graph {
-		List<Edge> edges = new ArrayList<>();
-		Map<Integer, Node> nodes = new HashMap<>();
+		Node[] nodes;
 
 		void addNode(int x, int y, boolean front) {
 			Edge e = new Edge();
 			e.front = front;
-			nodes.putIfAbsent(x, new Node(x));
-			nodes.putIfAbsent(y, new Node(y));
-			e.n1 = nodes.get(x);
-			e.n2 = nodes.get(y);
+			if (nodes[x] == null) {
+				nodes[x] = new Node(x);
+			}
+			if (nodes[y] == null) {
+				nodes[y] = new Node(y);
+			}
+			e.n1 = nodes[x];
+			e.n2 = nodes[y];
 			e.n1.edges.add(e);
 			e.n2.edges.add(e);
-			edges.add(e);
 		}
 
-		Node getStartNode() {
-			for (Node n : nodes.values()) {
+		private Node getStartNode() {
+			Node any = null;
+			for (Node n : nodes) {
+				if (n == null) {
+					continue;
+				}
+				any = n;
 				int front = 0;
 				int notFront = 0;
 				for (Edge edge : n.edges) {
@@ -202,20 +194,22 @@ public class Solution {
 					return n;
 				}
 			}
-			return edges.get(0).n1;
+			return any;
 		}
 
 		public void remove(Collection<Edge> thread) {
 			for (Edge edge : thread) {
-				edges.remove(edge);
-				edge.n1.edges.remove(edge);
-				edge.n2.edges.remove(edge);
+//				edge.n1.edges.remove(edge);
+//				edge.n2.edges.remove(edge);
+//				if (edge.n1.edges.isEmpty()) {
+				nodes[edge.n1.index] = null;
+//				}
+//				if (edge.n2.edges.isEmpty()) {
+				nodes[edge.n2.index] = null;
+//				}
 			}
 		}
 
-		int size() {
-			return edges.size();
-		}
 	}
 
 	private static class Node {
@@ -236,33 +230,13 @@ public class Solution {
 	private static class Edge {
 		Node n1, n2;
 		boolean front;
+		boolean processed;
 
-		@Override
-		public int hashCode() {
-			return n1.index + n2.index;
-		}
-
-		public Node next(Node n) {
-			if (n1 != n) {// за одно поменяем ориентацию для удобства
+		public void setStart(Node n) {
+			if (n1 != n) {// поменяем ориентацию для удобства
 				n2 = n1;
 				n1 = n;
 			}
-			return n2;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			Edge e = (Edge) obj;
-			if (e.front != front) {
-				return false;
-			}
-			if (n1.index == e.n1.index && n2.index == e.n2.index) {
-				return true;
-			}
-			if (n2.index == e.n1.index && n1.index == e.n2.index) {
-				return true;
-			}
-			return false;
 		}
 
 		@Override
