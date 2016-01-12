@@ -2,8 +2,10 @@ package p1037;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.TreeSet;
 
 public class Solution {
 
@@ -30,26 +32,44 @@ public class Solution {
 	}
 
 	private List<Integer> memoty = new ArrayList<>();
+	private TreeSet<Integer> freeList = new TreeSet<>();
 
 	private int initMemory(String timeStr) {
 		int time = Integer.parseInt(timeStr);
 		int timeLimit = time - 600;
-		int index = 0;
-		for (int i = 1; i < memoty.size(); i++) {
-			if (memoty.get(i) != null) {
-				if (memoty.get(i) <= timeLimit) {
-					index = i;
-					break;
+
+		Data currentD = null;
+		while (!memInTime.isEmpty()) {
+			Data d = memInTime.getFirst();
+			if (d.time == time) {
+				currentD = d;
+				break;
+			}
+			if (d.time > timeLimit) {
+				break;
+			}
+			memInTime.removeFirst();
+			for (int m : d.list) {
+				if (memoty.get(m) == d.time) {
+					freeList.add(m);
 				}
 			}
 		}
-		if (index == 0) {
-			index = memoty.size();
+		int minMem;
+		if (freeList.isEmpty()) {
+			minMem = memoty.size();
 			memoty.add(time);
 		} else {
-			memoty.set(index, time);
+			minMem = freeList.pollFirst();
+			memoty.set(minMem, time);
 		}
-		return index;
+		if (currentD == null) {
+			currentD = new Data();
+			currentD.time = time;
+			memInTime.add(currentD);
+		}
+		currentD.list.add(minMem);
+		return minMem;
 	}
 
 	private String accessMemory(String timeStr, String blockStr) {
@@ -66,8 +86,32 @@ public class Solution {
 		if (value <= timeLimit) {
 			return "-";
 		}
+
+		Data currentD = null;
+		for (Data d : memInTime) {
+			if (d.time == time) {
+				currentD = d;
+				break;
+			}
+			if (d.time > time) {
+				break;
+			}
+		}
+		if (currentD == null) {
+			currentD = new Data();
+			currentD.time = time;
+			memInTime.add(currentD);
+		}
+		currentD.list.add(index);
 		memoty.set(index, time);
 		return "+";
+	}
+
+	private LinkedList<Data> memInTime = new LinkedList<Data>();
+
+	private static class Data {
+		int time;
+		private ArrayList<Integer> list = new ArrayList<>();
 	}
 
 }
