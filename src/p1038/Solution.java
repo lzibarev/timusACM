@@ -16,54 +16,45 @@ public class Solution {
 
 	protected void solution(Scanner in, PrintWriter out) {
 		int count = 0;
-		boolean startOfSentence = true;
+		boolean firstLetterOfSentence = true;
 		while (in.hasNext()) {
 			String text = in.nextLine();
-			int start = 0;
 			int end = 0;
-			while (true) {
-				while (end < text.length()) {
-					char c = text.charAt(end);
-					if (c == ' ' || c == '.' || c == ',' || c == '!' || c == '?' || c == ';' || c == ':' || c == '-') {
-						break;
+			boolean inWord = false;
+			while (end < text.length()) {
+				char c = text.charAt(end);
+				if (isCapital(c) || isLittle(c)) {
+					if (firstLetterOfSentence) {
+						if (isLittle(c)) {
+							count++;
+						}
+						firstLetterOfSentence = false;
 					}
-					end++;
-				}
-				if (end < text.length()) {
-					end++;
-				}
-				String word = text.substring(start, end);
-				start = end;
-				if (word.isEmpty()) {
-					break;
-				}
-				word = word.trim();
-				if (word.isEmpty()) {
-					continue;
-				}
-				if (startOfSentence) {
-					char c = word.charAt(0);
-					if (!isCapital(c)) {
-						count++;
-						System.out.println("start with \"" + word + "\"");
+
+					if (inWord) {
+						if (isCapital(c)) {
+							count++;
+						}
+					}
+					inWord = true;
+				} else {
+					inWord = false;
+					if (isTerminal(c)) {
+						firstLetterOfSentence = true;
 					}
 				}
-				for (int i = 1; i < word.length(); i++) {
-					char c = word.charAt(i);
-					if (isCapital(c)) {
-						count++;
-						System.out.println("capital \"" + word + "\" " + c);
-					}
-				}
-				startOfSentence = isTerminal(word.charAt(word.length() - 1));
+				end++;
 			}
-			// System.out.println("\"" + word + "\"");
 		}
 		out.println(count);
 	}
 
 	private boolean isCapital(char c) {
 		return c >= 'A' && c <= 'Z';
+	}
+
+	private boolean isLittle(char c) {
+		return c >= 'a' && c <= 'z';
 	}
 
 	private boolean isTerminal(char c) {

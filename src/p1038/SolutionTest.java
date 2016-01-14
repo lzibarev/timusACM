@@ -36,7 +36,91 @@ public class SolutionTest {
 	public void test1() {
 		input = "This-is-that.";
 		output = run(input);
+		Assert.assertEquals("0", output);
+	}
+
+	@Test
+	public void test2() {
+		input = "";
+		output = run(input);
+		Assert.assertEquals("0", output);
+	}
+
+	@Test
+	public void test3() {
+		input = "a";
+		output = run(input);
+		Assert.assertEquals("1", output);
+	}
+
+	@Test
+	public void test4() {
+		input = "A";
+		output = run(input);
+		Assert.assertEquals("0", output);
+	}
+
+	@Test
+	public void test5() {
+		input = "a.a.a";
+		output = run(input);
 		Assert.assertEquals("3", output);
+	}
+
+	@Test
+	public void test6() {
+		input = "a.aA.a";
+		output = run(input);
+		Assert.assertEquals("4", output);
+	}
+
+	@Test
+	public void test7() {
+		input = "-a";
+		output = run(input);
+		Assert.assertEquals("1", output);
+	}
+
+	@Test
+	public void test8() {
+		input = "Asf,.,a";
+		output = run(input);
+		Assert.assertEquals("1", output);
+	}
+
+	@Test
+	public void test9() {
+		input = "Asf.,a";
+		output = run(input);
+		Assert.assertEquals("1", output);
+	}
+
+	@Test
+	public void test10() {
+		input = "Hello! 238 my Friend";
+		output = run(input);
+		Assert.assertEquals("1", output);
+	}
+
+	@Test
+	public void test11() {
+		input = "Hello! 238my Friend";
+		output = run(input);
+		Assert.assertEquals("1", output);
+	}
+
+	@Test
+	public void test12() {
+		input = "A\r\na";
+		output = run(input);
+		Assert.assertEquals("0", output);
+	}
+
+	@Test
+	public void test13() {
+		input = "090aA is a number.";
+		output = run(input);
+		Assert.assertEquals("2", output);
 	}
 
 }
